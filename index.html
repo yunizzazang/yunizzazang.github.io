@@ -11,12 +11,19 @@
     p{margin:0;opacity:.75;line-height:1.4}
     main{max-width:1100px;margin:0 auto;padding:0 20px 40px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-    .card{border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
+    .card{position:relative;border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
+.overlay{
+  position:absolute;
+  left:0; right:0; top:0;
+  height: calc(100% - 64px); /* meta(제목/설명) 영역은 빼고 iframe 영역만 클릭 */
+  display:block;
+}
     .meta{padding:12px}
     .title{font-size:14px;font-weight:600;margin:0 0 6px}
     .desc{font-size:12px;opacity:.7;margin:0}
     iframe{width:100%;aspect-ratio:1/1;border:0;display:block;background:#000}
     a{color:inherit;opacity:.85}
+    
   </style>
 </head>
 <body>
@@ -26,23 +33,27 @@
   </header>
 
   <main>
-    <div class="grid">
-      <div class="card">
-        <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
-        <div class="meta">
-          <p class="title">Typo Particle — Trace</p>
-          <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
-        </div>
-      </div>
+   <div class="card">
+  <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
+  <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
+
+  <div class="meta">
+    <p class="title">Typo Particle — Trace</p>
+    <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
+  </div>
+</div>
 
       <!-- 카드 복사해서 작품 추가 -->
-      <div class="card">
-        <iframe src="PASTE_YOUR_P5_FULL_LINK_HERE"></iframe>
-        <div class="meta">
-          <p class="title">Study #2</p>
-          <p class="desc">설명 한 줄</p>
-        </div>
-      </div>
+     <div class="card">
+  <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
+  <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
+
+  <div class="meta">
+    <p class="title">Typo Particle — Trace</p>
+    <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
+  </div>
+</div>
+
     </div>
   </main>
 </body>

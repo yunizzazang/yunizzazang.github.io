@@ -226,20 +226,41 @@ function drawElementsStroked() {
 }
 
 function drawTriangleFilled(s) {
-  const r = s * 0.58;
-  beginShape();
-  vertex(0, -r);
-  vertex(r * 0.9, r * 0.85);
-  vertex(-r * 0.9, r * 0.85);
-  endShape(CLOSE);
+  roundedTriangle(s, 14, true);  // 14 = 라운드 정도(픽셀)
 }
 
 function drawTriangleStroked(s) {
-  const r = s * 0.58;
+  roundedTriangle(s, 14, false);
+}
+
+// rounded triangle using quadratic curves
+function roundedTriangle(size, radius, filled) {
+  // 기본 삼각형 좌표(정삼각 느낌)
+  const r = size * 0.58;
+  const p1 = createVector(0, -r);
+  const p2 = createVector(r * 0.9, r * 0.85);
+  const p3 = createVector(-r * 0.9, r * 0.85);
+  const pts = [p1, p2, p3];
+
   beginShape();
-  vertex(0, -r);
-  vertex(r * 0.9, r * 0.85);
-  vertex(-r * 0.9, r * 0.85);
+  for (let i = 0; i < 3; i++) {
+    const a = pts[(i + 2) % 3];
+    const b = pts[i];
+    const c = pts[(i + 1) % 3];
+
+    // b에서 a 방향, c 방향으로 radius만큼 이동한 점 2개
+    const v1 = p5.Vector.sub(a, b).normalize().mult(radius);
+    const v2 = p5.Vector.sub(c, b).normalize().mult(radius);
+
+    const pA = p5.Vector.add(b, v1);
+    const pC = p5.Vector.add(b, v2);
+
+    if (i === 0) vertex(pA.x, pA.y);
+    else vertex(pA.x, pA.y);
+
+    // 꼭지점 b를 둥글게: quadratic curve
+    quadraticVertex(b.x, b.y, pC.x, pC.y);
+  }
   endShape(CLOSE);
 }
 

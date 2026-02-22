@@ -17,13 +17,14 @@
   left:0; right:0; top:0;
   height: calc(100% - 64px); /* meta(제목/설명) 영역은 빼고 iframe 영역만 클릭 */
   display:block;
+  z-index: 2;   /* 이 줄 추가 */
+  cursor: pointer;
 }
-.overlay { cursor: pointer; }
     
     .meta{padding:12px}
     .title{font-size:14px;font-weight:600;margin:0 0 6px}
     .desc{font-size:12px;opacity:.7;margin:0}
-    iframe{width:100%;aspect-ratio:1/1;border:0;display:block;background:#000}
+    iframe{width:100%;aspect-ratio:1/1;border:0;display:block;background:#000;pointer-events:none;}
     a{color:inherit;opacity:.85}
     
   </style>

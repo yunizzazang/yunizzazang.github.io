@@ -77,7 +77,7 @@ function draw() {
 
   ctx.save();
   clipInsideCircle(ctx, cPos.x, cPos.y, cfg.r);
-  drawElementsStroked();
+  drawElementsFilledBlack();   // <-- 새 함수 (원 안에서 겹치는 부분을 검정 채움)
   ctx.restore();
 
   // cursor circle guide (subtle)
@@ -90,6 +90,26 @@ function draw() {
   drawMotionHint();
 
   pPrev.set(pNow);
+}
+
+function drawElementsFilledBlack() {
+  noStroke();
+  fill(0); // ✅ 겹치는 영역을 검정으로
+  for (const e of elems) {
+    push();
+    translate(e.x, e.y);
+    rotate(e.rot);
+
+    if (e.type === "circle") {
+      circle(0, 0, e.size);
+    } else if (e.type === "rect") {
+      rectMode(CENTER);
+      rect(0, 0, e.size * 1.1, e.size * 0.8, 22);
+    } else { // tri
+      drawTriangleFilled(e.size);
+    }
+    pop();
+  }
 }
 
 // ---------------- Elements ----------------

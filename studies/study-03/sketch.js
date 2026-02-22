@@ -170,11 +170,11 @@ function buildElements() {
 
 function updateElementsPhysics() {
   for (const e of elems) {
-    // 1) 기본적으로는 base 위치로 살짝 돌아가려는 힘(너무 흩어지지 않게)
+    // 1) base 위치로 아주 약하게 복귀(전체 구도 유지)
     const homeX = (e.baseX - e.x) * 0.004;
     const homeY = (e.baseY - e.y) * 0.004;
 
-    // 2) 마우스 자성: 가까우면 cursor circle을 향해 끌림(스프링 느낌)
+    // 커서 원과 거리
     const dx = cPos.x - e.x;
     const dy = cPos.y - e.y;
     const d = sqrt(dx * dx + dy * dy);
@@ -182,37 +182,36 @@ function updateElementsPhysics() {
     let ax = homeX;
     let ay = homeY;
 
+    // 2) 원이 지나가는 방향으로 "살짝" 밀리고 휘는 탄성
     if (d < cfg.magRadius) {
-  // 가까울수록 영향 커짐
-  const t = 1 - (d / cfg.magRadius); // 0~1
+      const t = 1 - (d / cfg.magRadius); // 0~1 (가까울수록 1)
 
-  // 원의 이동 방향(velocity) = cPos가 이전 프레임에서 얼마나 움직였는지
-const mvx = cPos.x - cPrev.x;
-const mvy = cPos.y - cPrev.y;
-  const ms = sqrt(mvx * mvx + mvy * mvy) + 0.0001;
+      // 원의 실제 이동 방향(이전 원 위치 대비)
+      const mvx = cPos.x - cPrev.x;
+      const mvy = cPos.y - cPrev.y;
+      const ms = sqrt(mvx * mvx + mvy * mvy) + 0.0001;
 
-  // 단위 방향 벡터
-  const ux = mvx / ms;
-  const uy = mvy / ms;
+      const ux = mvx / ms;
+      const uy = mvy / ms;
 
-  // "진행 방향으로 살짝 밀기" + "옆으로 살짝 휘기" (탄성 느낌)
-  // ※ 끌어당김(ax += dx*k) 없음 → 원 안으로 빨려들지 않음
-  const along = cfg.magStrength * (t * t) * 140;
-  const side  = cfg.magStrength * (t * t) * 90;
+      // 강도(가까울수록 더)
+      const along = cfg.magStrength * (t * t) * 140;
+      const side  = cfg.magStrength * (t * t) * 90;
 
-  // 진행 방향 push
-  ax += ux * along;
-  ay += uy * along;
+      // 진행 방향으로 살짝 밀기
+      ax += ux * along;
+      ay += uy * along;
 
-  // 진행 방향에 수직인 방향으로 휘기(좌/우 랜덤처럼 보이게 노이즈 사용)
-  const sgn = (noise(e.x * 0.01, e.y * 0.01, frameCount * 0.01) > 0.5) ? 1 : -1;
-  ax += (-uy) * side * sgn;
-  ay += ( ux) * side * sgn;
+      // 진행 방향에 수직으로 살짝 휘기
+      const sgn = (noise(e.x * 0.01, e.y * 0.01, frameCount * 0.01) > 0.5) ? 1 : -1;
+      ax += (-uy) * side * sgn;
+      ay += ( ux) * side * sgn;
 
-  // 회전도 아주 미세하게
-  e.vr += sgn * 0.00045 * t;
-}
-    // 3) 기울기(폰): 아주 은은하게 전체를 밀어줌
+      // 회전도 아주 미세하게
+      e.vr += sgn * 0.00045 * t;
+    }
+
+    // 3) 기울기(폰)
     ax += tilt.x * 0.06 * cfg.tiltStrength;
     ay += tilt.y * 0.06 * cfg.tiltStrength;
 
@@ -227,7 +226,7 @@ const mvy = cPos.y - cPrev.y;
     e.vr *= 0.96;
     e.rot += e.vr;
 
-    // 화면 밖으로 너무 나가면 부드럽게 되돌리기
+    // 화면 밖으로 너무 나가면 부드럽게 복귀
     const pad = 220;
     if (e.x < -pad || e.x > width + pad || e.y < -pad || e.y > height + pad) {
       e.x = lerp(e.x, width / 2, 0.06);

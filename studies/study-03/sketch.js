@@ -95,18 +95,17 @@ function draw() {
 
 function drawElementsFilledBlack() {
   noStroke();
-  fill(0); // ✅ 겹치는 영역을 검정으로
+  fill(0); // 검정
   for (const e of elems) {
     push();
     translate(e.x, e.y);
     rotate(e.rot);
 
-    if (e.type === "circle") {
-      circle(0, 0, e.size);
-    } else if (e.type === "rect") {
+    if (e.type === "circle") circle(0, 0, e.size);
+    else if (e.type === "rect") {
       rectMode(CENTER);
       rect(0, 0, e.size * 1.1, e.size * 0.8, 22);
-    } else { // tri
+    } else {
       drawTriangleFilled(e.size);
     }
     pop();

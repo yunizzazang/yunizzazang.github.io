@@ -14,13 +14,13 @@ let elems = [];
 let cfg = {
   count: 34,
   r: 160 * 0.6,     // ✅ 60% size
-  lead: 90,         // circle leads in pointer direction
+  lead: 70,         // circle leads in pointer direction
   ease: 0.14,       // circle smoothing
   bg: [10, 10, 10],
 
   // magnetic
-  magRadius: 220,
-  magStrength: 0.22, // spring strength
+  magRadius: 260,
+  magStrength: 0.035, // spring strength
   magDamp: 0.82,     // velocity damping
 
   // tilt
@@ -111,7 +111,7 @@ function buildElements() {
   for (let i = 0; i < cfg.count; i++) {
     const x = random(-pad, width + pad);
     const y = random(-pad, height + pad);
-    const size = random(70, 180);
+    const size = random(70, 180) * 1.8;;
     const rot = random(-PI, PI);
     const col = random(palette);
 

@@ -253,7 +253,7 @@ function drawElementsFilled() {
     push();
     translate(e.x, e.y);
     rotate(e.rot);
-    fill(245, 245, 245, 170);
+    fill(e.col[0], e.col[1], e.col[2], 205);
 
     if (e.type === "circle") {
       circle(0, 0, e.size);

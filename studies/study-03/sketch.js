@@ -146,16 +146,35 @@ function updateElementsPhysics() {
     let ay = homeY;
 
     if (d < cfg.magRadius) {
-      // 가까울수록 강해지는 스프링(자성)
-      const t = 1 - (d / cfg.magRadius); // 0~1
-      const k = cfg.magStrength * (t * t); // 더 안쪽에서 강해짐
-      ax += dx * k;
-      ay += dy * k;
+  // 가까울수록 영향 커짐
+  const t = 1 - (d / cfg.magRadius); // 0~1
 
-      // 살짝 회전(자석에 끌릴 때 생동감)
-      e.vr += (random(-1, 1) * 0.0007) * t;
-    }
+  // 원의 이동 방향(velocity) = cPos가 이전 프레임에서 얼마나 움직였는지
+  const mvx = cPos.x - pPrev.x;
+  const mvy = cPos.y - pPrev.y;
+  const ms = sqrt(mvx * mvx + mvy * mvy) + 0.0001;
 
+  // 단위 방향 벡터
+  const ux = mvx / ms;
+  const uy = mvy / ms;
+
+  // "진행 방향으로 살짝 밀기" + "옆으로 살짝 휘기" (탄성 느낌)
+  // ※ 끌어당김(ax += dx*k) 없음 → 원 안으로 빨려들지 않음
+  const along = cfg.magStrength * (t * t) * 140;
+  const side  = cfg.magStrength * (t * t) * 90;
+
+  // 진행 방향 push
+  ax += ux * along;
+  ay += uy * along;
+
+  // 진행 방향에 수직인 방향으로 휘기(좌/우 랜덤처럼 보이게 노이즈 사용)
+  const sgn = (noise(e.x * 0.01, e.y * 0.01, frameCount * 0.01) > 0.5) ? 1 : -1;
+  ax += (-uy) * side * sgn;
+  ay += ( ux) * side * sgn;
+
+  // 회전도 아주 미세하게
+  e.vr += sgn * 0.00045 * t;
+}
     // 3) 기울기(폰): 아주 은은하게 전체를 밀어줌
     ax += tilt.x * 0.06 * cfg.tiltStrength;
     ay += tilt.y * 0.06 * cfg.tiltStrength;

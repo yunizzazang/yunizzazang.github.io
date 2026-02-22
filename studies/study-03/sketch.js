@@ -27,7 +27,7 @@ let cfg = {
   tiltStrength: 1.15, // how much tilt influences motion
 };
 
-let pNow, pPrev, cPos;
+let pNow, pPrev, cPos, cPrev;
 let tilt = { x: 0, y: 0 };
 let motionEnabled = false;
 
@@ -40,6 +40,7 @@ function setup() {
   cPos = pNow.copy();
 
   buildElements();
+  cPrev = cPos.copy();
 }
 
 function draw() {
@@ -58,7 +59,7 @@ function draw() {
     v.normalize();
     target.add(v.mult(cfg.lead));
   }
-
+  cPrev.set(cPos);
   // smooth circle motion
   cPos.x = lerp(cPos.x, target.x, cfg.ease);
   cPos.y = lerp(cPos.y, target.y, cfg.ease);
@@ -95,9 +96,24 @@ function draw() {
 
 function buildElements() {
   elems = [];
-  const pad = 90;
 
-  // 다채로운 팔레트 (원하면 2색 팔레트로도 바꿀 수 있음)
+  // ✅ 화면 채움용: 화면 크기에 따라 스케일 자동
+  const s = min(width, height);
+
+  // ✅ “큰/중간/작은” 크기 범위 (지금보다 확 커짐)
+  function pickSize() {
+    const roll = random();
+    if (roll < 0.30) return random(s * 0.28, s * 0.40); // BIG
+    if (roll < 0.80) return random(s * 0.18, s * 0.28); // MID
+    return random(s * 0.12, s * 0.18);                  // SMALL
+  }
+
+  // ✅ 살짝만 겹치게: 0.88~0.92 사이 추천 (작을수록 더 겹침 허용)
+  const overlapFactor = 0.90;
+
+  // 화면 가장자리까지 꽉 채우되 너무 밖으로는 안 나가게
+  const pad = 40;
+
   const palette = [
     [255, 82, 82],
     [255, 214, 0],
@@ -108,39 +124,49 @@ function buildElements() {
     [255, 64, 129],
   ];
 
-  for (let i = 0; i < cfg.count; i++) {
-    const x = random(-pad, width + pad);
-    const y = random(-pad, height + pad);
-    let size;
-    const roll = random();
+  // ✅ “겹침 제어”를 위해 기존 요소들과 거리 체크하면서 배치
+  const maxAttempts = 5000; // 배치 시도 횟수(충분히 크게)
+  let attempts = 0;
 
-    if (roll < 0.25) {
-    // BIG (25%)
-    size = random(170, 260);
-    } else if (roll < 0.75) {
-    // MID (50%)
-    size = random(110, 170);}
-    else {
-    // SMALL (25%)
-    size = random(70, 110);}
-    const rot = random(-PI, PI);
-    const col = random(palette);
+  while (elems.length < cfg.count && attempts < maxAttempts) {
+    attempts++;
+
+    const size = pickSize();
+    const x = random(pad, width - pad);
+    const y = random(pad, height - pad);
+
+    // 도형별 대략 반지름(충돌 체크용)
+    // rect/tri도 원처럼 근사해서 체크 (디자인에 충분히 자연스러움)
+    const r = size * 0.55;
+
+    let ok = true;
+    for (const e of elems) {
+      const rr = (e.size * 0.55 + r) * overlapFactor;
+      const dx = x - e.x;
+      const dy = y - e.y;
+      if (dx * dx + dy * dy < rr * rr) { ok = false; break; }
+    }
+    if (!ok) continue;
 
     const typeRoll = random();
     const type = typeRoll < 0.34 ? "circle" : (typeRoll < 0.67 ? "tri" : "rect");
 
     elems.push({
       x, y,
-      baseX: x, baseY: y,     // 기준 위치(자성 후 복귀에 사용)
+      baseX: x, baseY: y,
       vx: 0, vy: 0,
       size,
-      rot,
+      rot: random(-PI, PI),
       vr: random(-0.01, 0.01),
-      col,
+      col: random(palette),
       type,
     });
   }
+
+  // 혹시 배치가 덜 채워졌으면(아주 큰 화면/겹침 제한이 강할 때)
+  // overlapFactor를 조금 낮추면(0.88) 더 많이 들어감
 }
+
 
 function updateElementsPhysics() {
   for (const e of elems) {
@@ -161,8 +187,8 @@ function updateElementsPhysics() {
   const t = 1 - (d / cfg.magRadius); // 0~1
 
   // 원의 이동 방향(velocity) = cPos가 이전 프레임에서 얼마나 움직였는지
-  const mvx = cPos.x - pPrev.x;
-  const mvy = cPos.y - pPrev.y;
+const mvx = cPos.x - cPrev.x;
+const mvy = cPos.y - cPrev.y;
   const ms = sqrt(mvx * mvx + mvy * mvy) + 0.0001;
 
   // 단위 방향 벡터

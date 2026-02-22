@@ -77,7 +77,7 @@ function draw() {
 
   ctx.save();
   clipInsideCircle(ctx, cPos.x, cPos.y, cfg.r);
-  //drawElementsFilledBlack();   // <-- 새 함수 (원 안에서 겹치는 부분을 검정 채움)
+  drawElementsFilledBlack();   // <-- 새 함수 (원 안에서 겹치는 부분을 검정 채움)
   drawElementsStroked(); // 라인은 컬러 그대로
   ctx.restore();
 
@@ -265,7 +265,7 @@ function drawElementsFilled() {
     push();
     translate(e.x, e.y);
     rotate(e.rot);
-    fill(245, 245, 245, 170);
+    // fill(245, 245, 245, 170);
 
     if (e.type === "circle") {
       circle(0, 0, e.size);

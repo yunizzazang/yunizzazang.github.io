@@ -1,115 +1,208 @@
 /**
- * STUDY 03 — Two Tone Pulse Grid (cleaner)
- * - 2 colors only
- * - soft pulse (brightness rhythm)
- * - subtle mouse focus
- * - Click: shift rhythm
- * - Wheel: scale
+ * STUDY 03 — Overlap becomes Lines
+ * - Circle follows pointer direction (lead)
+ * - Outside circle: colorful filled elements
+ * - Inside circle: same elements rendered as strokes only
+ * - Touch supported
+ * - Wheel: circle size
+ * - R: reshuffle  /  S: save
  */
 
+let elems = [];
 let cfg = {
-  cell: 22,          // spacing
-  speed: 0.018,      // rhythm speed
-  trail: 22,         // afterimage (higher = less trail)
-  focusR: 180,       // mouse focus radius
+  count: 36,
+  r: 160,
+  lead: 90,      // how much circle leads in direction
+  ease: 0.12,    // circle smoothing
+  bg: [10, 10, 10],
   seed: 0
 };
 
-// 딱 2색 (잉크/종이 느낌)
-const INK  = [235, 232, 225]; // 밝은 점/선
-const DARK = [12, 12, 12];    // 배경(거의 검정)
-
-let phase = 0;
+let pNow, pPrev;
+let cPos;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   cfg.seed = floor(random(1e9));
-  noiseSeed(cfg.seed);
-  background(DARK[0], DARK[1], DARK[2]);
+  randomSeed(cfg.seed);
+
+  pNow = createVector(width/2, height/2);
+  pPrev = pNow.copy();
+  cPos = pNow.copy();
+
+  buildElements();
 }
 
 function draw() {
-  // 잔상(호흡)
-  noStroke();
-  fill(DARK[0], DARK[1], DARK[2], cfg.trail);
-  rect(0, 0, width, height);
+  background(cfg.bg[0], cfg.bg[1], cfg.bg[2]);
 
-  const t = frameCount * cfg.speed + phase;
+  // pointer (mouse/touch)
+  const px = (touches && touches.length) ? touches[0].x : mouseX;
+  const py = (touches && touches.length) ? touches[0].y : mouseY;
 
-  // 화면 중앙 기준, 더 차분한 구성
-  const cell = cfg.cell;
-  const cols = floor(width / cell);
-  const rows = floor(height / cell);
+  pNow.set(constrain(px, 0, width), constrain(py, 0, height));
 
-  // 그리드가 화면 가운데 오도록 오프셋
-  const ox = (width - cols * cell) * 0.5 + cell * 0.5;
-  const oy = (height - rows * cell) * 0.5 + cell * 0.5;
+  // direction = pointer velocity
+  const v = p5.Vector.sub(pNow, pPrev);
+  const sp = v.mag();
 
+  // lead target in movement direction
+  let target = pNow.copy();
+  if (sp > 0.2) {
+    v.normalize();
+    target.add(v.mult(cfg.lead));
+  }
+
+  // smooth circle motion
+  cPos.x = lerp(cPos.x, target.x, cfg.ease);
+  cPos.y = lerp(cPos.y, target.y, cfg.ease);
+
+  // ---- 핵심: "원 밖"과 "원 안"을 각각 클립해서 다른 스타일로 렌더 ----
+  const ctx = drawingContext;
+
+  // 1) 원 밖: fill(컬러)
+  ctx.save();
+  clipOutsideCircle(ctx, cPos.x, cPos.y, cfg.r);
+  drawElementsFilled();
+  ctx.restore();
+
+  // 2) 원 안: stroke(라인)
+  ctx.save();
+  clipInsideCircle(ctx, cPos.x, cPos.y, cfg.r);
+  drawElementsStroked();
+  ctx.restore();
+
+  // circle guide (optional)
+  noFill();
+  stroke(245, 140);
   strokeWeight(1);
+  circle(cPos.x, cPos.y, cfg.r * 2);
 
-  for (let j = 0; j < rows; j++) {
-    for (let i = 0; i < cols; i++) {
-      const x = ox + i * cell;
-      const y = oy + j * cell;
+  pPrev.set(pNow);
+}
 
-      // 리듬: 전체 + 좌표 기반 미세 위상 차
-      const local = i * 0.22 + j * 0.18;
-      const w = sin(t + local);
+function buildElements() {
+  elems = [];
+  const pad = 140;
+  const palette = [
+    [255, 82, 82],
+    [255, 214, 0],
+    [0, 229, 255],
+    [124, 77, 255],
+    [0, 230, 118],
+    [255, 109, 0]
+  ];
 
-      // 알파: 0~255 (깜빡임 말고 “숨”)
-      let a = 18 + 160 * pow(abs(w), 1.6);
+  for (let i = 0; i < cfg.count; i++) {
+    const x = random(-pad, width + pad);
+    const y = random(-pad, height + pad);
+    const w = random(80, 220);
+    const h = random(60, 200);
+    const rot = random(-0.7, 0.7);
+    const col = random(palette);
 
-      // 마우스 근처는 살짝 또렷
-      const d = dist(x, y, mouseX, mouseY);
-      const m = smoothstep(cfg.focusR, 0, d); // 가까울수록 1
-      a += m * 70;
+    // 타입 섞기 (blob-like / rect-like)
+    const type = random() < 0.55 ? "blob" : "rect";
 
-      // “점”만 찍으면 너무 밋밋해서: 1/4 확률로 아주 짧은 선
-      const n = noise(i * 0.08, j * 0.08, t * 0.35);
-      const useLine = n > 0.78;
-
-      stroke(INK[0], INK[1], INK[2], constrain(a, 0, 210));
-
-      if (useLine) {
-        // 선 방향도 노이즈로
-        const ang = n * TWO_PI * 2;
-        const len = cell * (0.12 + 0.22 * abs(w));
-        line(x, y, x + cos(ang) * len, y + sin(ang) * len);
-      } else {
-        point(x, y);
-      }
-    }
+    elems.push({ x, y, w, h, rot, col, type, n: random(1000) });
   }
 }
 
-function smoothstep(edge0, edge1, x) {
-  const t = constrain((x - edge0) / (edge1 - edge0), 0, 1);
-  return t * t * (3 - 2 * t);
+function drawElementsFilled() {
+  noStroke();
+  for (const e of elems) {
+    push();
+    translate(e.x, e.y);
+    rotate(e.rot);
+
+    // 약간의 투명도(겹침이 예쁘게)
+    const a = 200;
+    fill(e.col[0], e.col[1], e.col[2], a);
+
+    if (e.type === "rect") {
+      rectMode(CENTER);
+      rect(0, 0, e.w, e.h, 26);
+    } else {
+      // blob: 노이즈로 찌그러진 타원
+      beginShape();
+      const steps = 26;
+      for (let i = 0; i < steps; i++) {
+        const ang = (TWO_PI * i) / steps;
+        const rr = 0.55 + noise(e.n, i * 0.12) * 0.75;
+        const rx = (e.w * 0.5) * rr;
+        const ry = (e.h * 0.5) * rr;
+        vertex(cos(ang) * rx, sin(ang) * ry);
+      }
+      endShape(CLOSE);
+    }
+    pop();
+  }
 }
 
-function mousePressed() {
-  // 클릭: 리듬 위상 이동(장면이 바뀌는 느낌)
-  phase += random(0.9, 2.2);
+function drawElementsStroked() {
+  // 원 안에서는 "라인"만
+  noFill();
+  strokeWeight(1.25);
+
+  for (const e of elems) {
+    push();
+    translate(e.x, e.y);
+    rotate(e.rot);
+
+    // 라인은 밝은 단색 or 요소 색을 라인으로
+    // (진짜 2색 느낌 원하면 여기서 stroke를 한 색으로 고정하면 됨)
+    stroke(e.col[0], e.col[1], e.col[2], 235);
+
+    if (e.type === "rect") {
+      rectMode(CENTER);
+      rect(0, 0, e.w, e.h, 26);
+    } else {
+      beginShape();
+      const steps = 26;
+      for (let i = 0; i < steps; i++) {
+        const ang = (TWO_PI * i) / steps;
+        const rr = 0.55 + noise(e.n, i * 0.12) * 0.75;
+        const rx = (e.w * 0.5) * rr;
+        const ry = (e.h * 0.5) * rr;
+        vertex(cos(ang) * rx, sin(ang) * ry);
+      }
+      endShape(CLOSE);
+    }
+    pop();
+  }
+}
+
+// ---- clipping helpers ----
+// 원 밖 클립: rect + circle을 evenodd로 clip
+function clipOutsideCircle(ctx, cx, cy, r) {
+  ctx.beginPath();
+  ctx.rect(0, 0, width, height);
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  // evenodd rule = circle 부분을 "구멍"으로
+  ctx.clip("evenodd");
+}
+
+function clipInsideCircle(ctx, cx, cy, r) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
 }
 
 function mouseWheel(e) {
-  // 휠: 스케일 조절
-  cfg.cell = constrain(cfg.cell + (e.delta > 0 ? 2 : -2), 14, 42);
+  cfg.r = constrain(cfg.r + (e.delta > 0 ? -12 : 12), 60, 320);
   return false;
 }
 
 function keyPressed() {
-  if (key === 's' || key === 'S') saveCanvas('study_03_pulse_grid', 'png');
-  if (key === 'r' || key === 'R') {
+  if (key === "r" || key === "R") {
     cfg.seed = floor(random(1e9));
-    noiseSeed(cfg.seed);
-    phase = 0;
-    background(DARK[0], DARK[1], DARK[2]);
+    randomSeed(cfg.seed);
+    buildElements();
   }
+  if (key === "s" || key === "S") saveCanvas("study_04_overlap_lines", "png");
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  background(DARK[0], DARK[1], DARK[2]);
 }

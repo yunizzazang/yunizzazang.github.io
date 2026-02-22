@@ -18,6 +18,8 @@
   height: calc(100% - 64px); /* meta(제목/설명) 영역은 빼고 iframe 영역만 클릭 */
   display:block;
 }
+.overlay { cursor: pointer; }
+    
     .meta{padding:12px}
     .title{font-size:14px;font-weight:600;margin:0 0 6px}
     .desc{font-size:12px;opacity:.7;margin:0}
@@ -32,28 +34,30 @@
     <p>AI_interactive web 실험실.</p>
   </header>
 
-  <main>
-   <div class="card">
-  <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
-  <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
+<main>
+  <div class="grid">
 
-  <div class="meta">
-    <p class="title">Typo Particle — Trace</p>
-    <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
-  </div>
-</div>
+    <div class="card">
+      <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
+      <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
 
-      <!-- 카드 복사해서 작품 추가 -->
-     <div class="card">
-  <iframe src="https://yunizzazang.github.io/studies/study-02/"></iframe>
-<a class="overlay" href="https://yunizzazang.github.io/studies/study-02/" target="_blank" rel="noopener"></a>
-  <div class="meta">
-    <p class="title">Typo Particle — Trace</p>
-    <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
-  </div>
-</div>
-
+      <div class="meta">
+        <p class="title">Typo Particle — Trace</p>
+        <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
+      </div>
     </div>
-  </main>
+
+    <div class="card">
+      <iframe src="https://yunizzazang.github.io/studies/study-02/"></iframe>
+      <a class="overlay" href="https://yunizzazang.github.io/studies/study-02/" target="_blank" rel="noopener"></a>
+
+      <div class="meta">
+        <p class="title">Study #2 — (원하는 이름)</p>
+        <p class="desc">마우스: 반발 · 노이즈 흐름</p>
+      </div>
+    </div>
+
+  </div>
+</main>
 </body>
 </html>

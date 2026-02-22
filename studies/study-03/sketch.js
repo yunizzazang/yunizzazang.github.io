@@ -77,7 +77,15 @@ function draw() {
 
   ctx.save();
   clipInsideCircle(ctx, cPos.x, cPos.y, cfg.r);
+
+  // ✅ 원 안에서 '도형이 없는 부분'을 흰색으로 채우기 (먼저 깔기)
+  noStroke();
+  fill(245);
+  circle(cPos.x, cPos.y, cfg.r * 2);
+
+  // ✅ 그 위에, 원 안에 있는 도형들은 라인으로만
   drawElementsStroked();
+
   ctx.restore();
 
   // cursor circle guide (subtle)

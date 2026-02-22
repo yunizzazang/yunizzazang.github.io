@@ -13,7 +13,7 @@
 let elems = [];
 let cfg = {
   count: 34,
-  r: 160 * 0.6,     // ✅ 60% size
+  r: 160 * 0.8,     // ✅ 60% size
   lead: 70,         // circle leads in pointer direction
   ease: 0.14,       // circle smoothing
   bg: [10, 10, 10],

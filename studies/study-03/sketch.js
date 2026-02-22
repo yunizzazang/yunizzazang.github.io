@@ -12,7 +12,7 @@
 
 let elems = [];
 let cfg = {
-  count: 34,
+  count: 18,
   r: 160 * 0.8,     // ✅ 80% size
   lead: 70,         // circle leads in pointer direction
   ease: 0.14,       // circle smoothing
@@ -95,7 +95,7 @@ function draw() {
 
 function buildElements() {
   elems = [];
-  const pad = 160;
+  const pad = 90;
 
   // 다채로운 팔레트 (원하면 2색 팔레트로도 바꿀 수 있음)
   const palette = [
@@ -111,7 +111,18 @@ function buildElements() {
   for (let i = 0; i < cfg.count; i++) {
     const x = random(-pad, width + pad);
     const y = random(-pad, height + pad);
-    const size = random(70, 180) * 1.8;;
+    let size;
+    const roll = random();
+
+    if (roll < 0.25) {
+    // BIG (25%)
+    size = random(170, 260);
+    } else if (roll < 0.75) {
+    // MID (50%)
+    size = random(110, 170);}
+    else {
+    // SMALL (25%)
+    size = random(70, 110);}
     const rot = random(-PI, PI);
     const col = random(palette);
 

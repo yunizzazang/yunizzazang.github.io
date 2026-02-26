@@ -11,7 +11,7 @@ const SUB  = [0xC6, 0xFF, 0x33]; // #C6FF33
 const SUB_RATIO = 0.22;
 
 // 잔상 강도: 숫자가 클수록 잔상이 빨리 사라짐(덜 쌓임)
-const TRAIL_ALPHA = 26;
+const TRAIL_ALPHA = 120;
 
 // 배경
 const BG = [8, 9, 12];

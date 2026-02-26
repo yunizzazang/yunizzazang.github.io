@@ -39,8 +39,11 @@ function draw() {
   rotateX((mouseY / height - 0.5) * 0.18);
 
   // 막대 업데이트/드로우
+    // ✅ LIGHTS (box가 검게 죽지 않게)
+  ambientLight(160);
+  directionalLight(255, 255, 255, 0.2, 0.3, -1);
   // (가볍게 Add 느낌을 주고 싶으면 아래 주석 해제)
-  // blendMode(ADD);
+  //blendMode(ADD);
 
   for (let i = sticks.length - 1; i >= 0; i--) {
     sticks[i].update();
@@ -78,25 +81,30 @@ function keyPressed() {
 }
 
 function spawnBurst(x, y, z, intensity) {
-  const count = floor(lerp(30, 160, intensity));
-  const baseSpeed = lerp(2.0, 10.5, intensity);
-  const baseLen = lerp(10, 46, intensity);
-  const life = floor(lerp(40, 120, intensity));
-  const depthSpread = lerp(0.6, 1.4, intensity);
+  const count = floor(lerp(30, 160, intensity));       // 막대 수
+  const baseSpeed = lerp(2.0, 10.5, intensity);        // 속도
+  const baseLen = lerp(10, 46, intensity);             // 막대 길이
+  const life = floor(lerp(40, 120, intensity));        // 수명
+  const depthSpread = lerp(0.6, 1.4, intensity);       // z방향 확장
 
   for (let i = 0; i < count; i++) {
+    // 구 형태로 퍼지게 방향 벡터 생성
     const dir = p5.Vector.random3D();
     dir.z *= depthSpread;
 
     const speed = baseSpeed * random(0.55, 1.35);
     const vel = dir.mult(speed);
 
+    // 막대는 자기 방향과 약간 다른 “회전축”을 가져서 더 생동감
     const spin = p5.Vector.random3D().mult(random(0.02, 0.08));
 
-    // ✅ 얇기 고정(연타해도 안 두꺼워짐)
-    const w = random(0.35, 0.9);
+    // 두께(연타일수록 살짝 두꺼워짐)
+    const w = lerp(0.45, 1.05, intensity) * random(0.75, 1.05);
 
+    // 길이 랜덤
     const len = baseLen * random(0.7, 1.35);
+
+    // 색은 2개만 (메인은 대부분, 서브는 포인트)
     const col = (random() < SUB_RATIO) ? SUB : MAIN;
 
     sticks.push(new Stick(x, y, z, vel, spin, len, w, life, col));
@@ -115,7 +123,6 @@ class Stick {
     this.vel = vel.copy();
     this.spin = spin.copy();
 
-    // 막대의 방향(로컬 축)
     this.axis = p5.Vector.random3D();
 
     this.len = len;
@@ -126,47 +133,85 @@ class Stick {
 
     this.col = col;
 
+    this.broke = false;
+    this.parts = [];
+
     this.dead = false;
   }
 
   update() {
-    // 이전보다 살짝 감속 + 아주 약한 중력
+    // 감속 + 아주 약한 중력
     this.vel.mult(0.972);
     this.vel.y += 0.02;
 
     this.pos.add(this.vel);
 
-    // 막대 방향을 조금씩 회전(간단히 축 벡터에 작은 변화)
+    // 막대 방향 회전
     this.axis.add(this.spin).normalize();
 
+    // ✅ 수명 후반부에 막대를 파티클로 분해 (한 번만)
+    const t = this.life / this.maxLife;
+    if (!this.broke && t < 0.35) {
+      this.broke = true;
+
+      const n = floor(random(10, 22));
+      for (let i = 0; i < n; i++) {
+        const u = random(-0.5, 0.5) * this.len;
+        const p = p5.Vector.mult(this.axis, u).add(this.pos);
+
+        const pv = this.vel.copy().mult(0.35).add(
+          p5.Vector.random3D().mult(random(0.6, 1.6))
+        );
+
+        this.parts.push({
+          pos: p.copy(),
+          vel: pv,
+          life: floor(random(14, 28))
+        });
+      }
+    }
+
     this.life -= 1;
-    if (this.life <= 0) this.dead = true;
+
+    // ✅ 파티클까지 다 끝나면 죽기
+    if (this.life <= 0 && (!this.broke || this.parts.length === 0)) {
+      this.dead = true;
+    }
   }
 
   draw() {
-  const t = this.life / this.maxLife;      // 1 -> 0
-  const a = 210 * pow(t, 1.35);            // 알파 (너무 번쩍이지 않게)
+    const t = this.life / this.maxLife; // 1 -> 0
 
-  // 막대 방향(axis)을 yaw/pitch로 변환해서 box를 그 방향으로 돌림
-  const v = this.axis;
-  const yaw = atan2(v.x, v.z);
-  const pitch = -asin(constrain(v.y, -1, 1));
+    // ✅ 파티클 모드
+    if (this.broke) {
+      for (let i = this.parts.length - 1; i >= 0; i--) {
+        const pt = this.parts[i];
+        pt.vel.mult(0.96);
+        pt.vel.y += 0.01;
+        pt.pos.add(pt.vel);
+        pt.life -= 1;
+        if (pt.life <= 0) this.parts.splice(i, 1);
+      }
 
-  // 시간이 지날수록 더 얇아지게(레퍼런스 감성)
-  const thick = this.w * (0.35 + 0.65 * pow(t, 1.2));
-  const len = this.len;
+      strokeWeight(max(1.0, this.w * 1.25));
+      const a2 = 160 * pow(t, 1.2);
+      stroke(this.col[0], this.col[1], this.col[2], a2);
 
-  push();
-  translate(this.pos.x, this.pos.y, this.pos.z);
-  rotateY(yaw);
-  rotateX(pitch);
+      for (const pt of this.parts) {
+        point(pt.pos.x, pt.pos.y, pt.pos.z);
+      }
+      return;
+    }
 
-  noStroke();
-  ambientMaterial(this.col[0], this.col[1], this.col[2], a);
+    // ✅ 막대 모드(초반)
+    const a = 230 * pow(t, 1.5);
+    strokeWeight(this.w);
+    stroke(this.col[0], this.col[1], this.col[2], a);
 
-  // “얇은 사각형 3D 막대”
-  box(len, thick, thick);
+    const half = this.len * 0.5;
+    const p1 = p5.Vector.mult(this.axis, -half).add(this.pos);
+    const p2 = p5.Vector.mult(this.axis, half).add(this.pos);
 
-  pop();
-}
+    line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+  }
 }

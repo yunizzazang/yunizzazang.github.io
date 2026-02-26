@@ -78,31 +78,25 @@ function keyPressed() {
 }
 
 function spawnBurst(x, y, z, intensity) {
-  const count = floor(lerp(30, 160, intensity));       // 막대 수
-  const baseSpeed = lerp(2.0, 10.5, intensity);        // 속도
-  const baseLen = lerp(10, 46, intensity);             // 막대 길이
-  const life = floor(lerp(40, 120, intensity));        // 수명
-  const depthSpread = lerp(0.6, 1.4, intensity);       // z방향 확장
-  const w = random(0.35, 0.9);  // 아주 얇은 막대 기본 두께
+  const count = floor(lerp(30, 160, intensity));
+  const baseSpeed = lerp(2.0, 10.5, intensity);
+  const baseLen = lerp(10, 46, intensity);
+  const life = floor(lerp(40, 120, intensity));
+  const depthSpread = lerp(0.6, 1.4, intensity);
 
   for (let i = 0; i < count; i++) {
-    // 구 형태로 퍼지게 방향 벡터 생성
     const dir = p5.Vector.random3D();
     dir.z *= depthSpread;
 
     const speed = baseSpeed * random(0.55, 1.35);
     const vel = dir.mult(speed);
 
-    // 막대는 자기 방향과 약간 다른 “회전축”을 가져서 더 생동감
     const spin = p5.Vector.random3D().mult(random(0.02, 0.08));
 
-    // 두께(연타일수록 살짝 두꺼워짐)
-    const w = lerp(0.45, 1.05, intensity) * random(0.75, 1.05);
+    // ✅ 얇기 고정(연타해도 안 두꺼워짐)
+    const w = random(0.35, 0.9);
 
-    // 길이 랜덤
     const len = baseLen * random(0.7, 1.35);
-
-    // 색은 2개만 (메인은 대부분, 서브는 포인트)
     const col = (random() < SUB_RATIO) ? SUB : MAIN;
 
     sticks.push(new Stick(x, y, z, vel, spin, len, w, life, col));

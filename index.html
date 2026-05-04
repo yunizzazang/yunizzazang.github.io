@@ -3,82 +3,263 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Yuni — Interactive Studies</title>
+  <title>Yuni — Studies</title>
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0b0b0b;color:#f2f2f2}
-    header{padding:28px 20px 46px;max-width:1100px;margin:0 auto}
-    h1{margin:0 0 8px;font-size:22px;font-weight:650}
-    p{margin:0;opacity:.75;line-height:1.4}
-    main{max-width:1100px;margin:0 auto;padding:28px 20px 40px}
-    .grid{display:grid;grid-template-columns: repeat(2, minmax(0, 1fr));gap:22px;}
-    .card{position:relative;border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03)}
-.overlay{
-  position:absolute;
-  left:0; right:0; top:0;
-  height: calc(100% - 64px); /* meta(제목/설명) 영역은 빼고 iframe 영역만 클릭 */
-  display:block;
-  z-index: 2;   /* 이 줄 추가 */
-  cursor: pointer;
-}
-    
-    .meta{padding:12px}
-    .title{font-size:14px;font-weight:600;margin:0 0 6px}
-    .desc{font-size:12px;opacity:.7;margin:0}
-    iframe{width:100%;aspect-ratio:4/3;border:0;display:block;background:#000;pointer-events:none;}
-    a{color:inherit;opacity:.85}
-    
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b0b0b;
+      color: #f2f2f2;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid rgba(255,255,255,0.08);
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: #0b0b0b;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .brand-sub {
+      font-size: 11px;
+      opacity: 0.5;
+      margin: 4px 0 36px;
+      letter-spacing: 0.04em;
+    }
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav a {
+      color: #f2f2f2;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      opacity: 0.6;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav a::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+      transform: scale(0.6);
+      transition: all 0.15s ease;
+    }
+    .nav a:hover {
+      opacity: 0.95;
+      background: rgba(255,255,255,0.04);
+    }
+    .nav a.active {
+      opacity: 1;
+      background: rgba(255,255,255,0.07);
+    }
+    .nav a.active::before {
+      background: #ffba00;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Content area */
+    .content { min-width: 0; min-height: 100vh; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Studies view (preserves original look) */
+    .studies-header {
+      padding: 28px 32px 14px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .studies-header h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 650;
+    }
+    .studies-header p {
+      margin: 0;
+      opacity: 0.75;
+      line-height: 1.4;
+    }
+    .studies-main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 32px 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+    }
+    .card {
+      position: relative;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(255,255,255,.03);
+    }
+    .overlay {
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: calc(100% - 64px);
+      display: block;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .meta { padding: 12px; }
+    .title { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+    .desc { font-size: 12px; opacity: 0.7; margin: 0; }
+    .card iframe {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border: 0;
+      display: block;
+      background: #000;
+      pointer-events: none;
+    }
+
+    /* Depth Poster view */
+    .depth-frame {
+      width: 100%;
+      height: 100vh;
+      border: 0;
+      display: block;
+      background: #ededed;
+    }
+
+    /* Mobile */
+    @media (max-width: 800px) {
+      body { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static;
+        height: auto;
+        padding: 18px 18px 14px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .brand-sub { margin-bottom: 14px; }
+      .nav {
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+      }
+      .nav a { white-space: nowrap; padding: 8px 12px; }
+      .grid { grid-template-columns: 1fr; }
+      .studies-header, .studies-main {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Interactive Studies</h1>
-    <p>AI_interactive web 실험실.</p>
-  </header>
 
-<main>
-  <div class="grid">
+<aside class="sidebar">
+  <div class="brand">Yuni</div>
+  <div class="brand-sub">creative web studio</div>
+  <nav class="nav">
+    <a href="#studies" data-view="studies">Interactive Studies</a>
+    <a href="#depth-poster" data-view="depth-poster">Depth Poster</a>
+  </nav>
+</aside>
 
-    <div class="card">
-      <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
-      <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
+<main class="content">
 
-      <div class="meta">
-        <p class="title">Typo Particle — Trace</p>
-        <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
+  <!-- View 1: Interactive Studies -->
+  <section class="view" id="view-studies">
+    <header class="studies-header">
+      <h1>Interactive Studies</h1>
+      <p>AI_interactive web 실험실.</p>
+    </header>
+    <div class="studies-main">
+      <div class="grid">
+        <div class="card">
+          <iframe src="https://yunizzazang.github.io/studies/typo-particle/"></iframe>
+          <a class="overlay" href="https://yunizzazang.github.io/studies/typo-particle/" target="_blank" rel="noopener"></a>
+          <div class="meta">
+            <p class="title">Typo Particle — Trace</p>
+            <p class="desc">클릭: 단어 변경 · 스크롤: 크기 · 마우스: 바람</p>
+          </div>
+        </div>
+        <div class="card">
+          <iframe src="https://yunizzazang.github.io/studies/study-02/"></iframe>
+          <a class="overlay" href="https://yunizzazang.github.io/studies/study-02/" target="_blank" rel="noopener"></a>
+          <div class="meta">
+            <p class="title">Whatever</p>
+            <p class="desc">마우스: 반발 · 노이즈 흐름</p>
+          </div>
+        </div>
+        <div class="card">
+          <iframe src="https://yunizzazang.github.io/studies/study-03/?v=2"></iframe>
+          <a class="overlay" href="https://yunizzazang.github.io/studies/study-03/" target="_blank" rel="noopener"></a>
+          <div class="meta">
+            <p class="title">Overlay line</p>
+            <p class="desc">2 colors · brightness loop · click: phase</p>
+          </div>
+        </div>
+        <div class="card">
+          <iframe src="https://yunizzazang.github.io/studies/study-05/"></iframe>
+          <a class="overlay" href="https://yunizzazang.github.io/studies/study-05/" target="_blank" rel="noopener"></a>
+          <div class="meta">
+            <p class="title">Key Burst (3D)</p>
+            <p class="desc">키 입력: 3D 막대 파티클 폭발 · 연타: 더 강하게</p>
+          </div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="card">
-      <iframe src="https://yunizzazang.github.io/studies/study-02/"></iframe>
-      <a class="overlay" href="https://yunizzazang.github.io/studies/study-02/" target="_blank" rel="noopener"></a>
+  <!-- View 2: Depth Poster (lazy-loads on first visit) -->
+  <section class="view" id="view-depth-poster">
+    <iframe class="depth-frame" id="depth-frame" title="Depth Poster" allow="clipboard-write"></iframe>
+  </section>
 
-      <div class="meta">
-        <p class="title">Whatever</p>
-        <p class="desc">마우스: 반발 · 노이즈 흐름</p>
-      </div>
-    </div>
-
-    <div class="card">
-  <iframe src="https://yunizzazang.github.io/studies/study-03/?v=2"></iframe>
-  <a class="overlay" href="https://yunizzazang.github.io/studies/study-03/" target="_blank" rel="noopener"></a>
-
-  <div class="meta">
-    <p class="title">Overlay line</p>
-    <p class="desc">2 colors · brightness loop · click: phase</p>
-  </div>
-</div>
-
-    <div class="card">
-  <iframe src="https://yunizzazang.github.io/studies/study-05/"></iframe>
-  <a class="overlay" href="https://yunizzazang.github.io/studies/study-05/" target="_blank" rel="noopener"></a>
-
-  <div class="meta">
-    <p class="title"> Key Burst (3D)</p>
-    <p class="desc">키 입력: 3D 막대 파티클 폭발 · 연타: 더 강하게</p>
-  </div>
-</div>
-
-  </div>
 </main>
+
+<script>
+  const VIEWS = ['studies', 'depth-poster'];
+  function showView(name) {
+    if (!VIEWS.includes(name)) name = 'studies';
+    document.querySelectorAll('.view').forEach(v =>
+      v.classList.toggle('active', v.id === 'view-' + name)
+    );
+    document.querySelectorAll('.nav a').forEach(a =>
+      a.classList.toggle('active', a.dataset.view === name)
+    );
+    // Lazy-load the Depth Poster iframe on first activation
+    if (name === 'depth-poster') {
+      const f = document.getElementById('depth-frame');
+      if (!f.src) f.src = 'depth-poster/';
+    }
+    document.title = name === 'depth-poster'
+      ? 'Yuni — Depth Poster'
+      : 'Yuni — Interactive Studies';
+  }
+  function fromHash() {
+    showView((location.hash.slice(1) || 'studies').toLowerCase());
+  }
+  window.addEventListener('hashchange', fromHash);
+  fromHash();
+</script>
+
 </body>
 </html>

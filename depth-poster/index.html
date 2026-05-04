@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Depth Poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@100..900&family=IBM+Plex+Sans+KR:wght@100;200;300;400;500;600;700&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@100..900&family=Noto+Serif+KR:wght@200..900&family=Song+Myung&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ededed;
+  --panel: #ffffff;
+  --ink: #111111;
+  --muted: #888888;
+  --line: #e6e6e6;
+  --accent: #ffba00;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: 'IBM Plex Sans KR', 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+@media (max-width: 880px) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--line); }
+  .canvas-area { padding: 20px; }
+  .poster-wrap { width: min(90vw, 480px); }
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--panel);
+  padding: 28px 24px 32px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.brand h1 {
+  margin: 0;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+.brand .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+}
+.brand .ver { font-size: 11px; color: var(--muted); margin-left: auto; }
+.tagline { font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+}
+
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fafafa;
+  color: var(--ink);
+}
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--ink);
+  background: #fff;
+}
+
+.upload-box {
+  display: block;
+  border: 1.5px dashed #cfcfcf;
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  background: #fafafa;
+  transition: all 0.15s;
+  width: 100%;
+}
+.upload-box:hover {
+  border-color: var(--ink);
+  background: #fff;
+}
+.upload-box .ic { font-size: 22px; line-height: 1; }
+.upload-box .t { font-size: 12px; color: #555; margin-top: 4px; }
+.upload-box .s { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.upload-box input { display: none; }
+.upload-box.has-file {
+  border-style: solid;
+  border-color: #cfcfcf;
+  text-align: left;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+}
+.upload-box.has-file .thumb {
+  width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+  background: #ddd; flex: none;
+}
+
+.row { display: flex; gap: 8px; align-items: center; }
+
+input[type="color"] {
+  height: 38px;
+  width: 50px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  padding: 2px;
+}
+
+input[type="range"] {
+  flex: 1;
+  accent-color: var(--ink);
+}
+
+.size-val {
+  font-size: 12px; min-width: 48px; text-align: right; color: #555;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+.btn:hover { background: #2a2a2a; }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn.ghost:hover { background: #f4f4f4; }
+
+.hint {
+  font-size: 11.5px;
+  color: #555;
+  line-height: 1.65;
+  background: #fffbeb;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-left: 3px solid var(--accent);
+  margin-top: 6px;
+}
+.hint kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid #ddd;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 10.5px;
+}
+
+/* Canvas */
+.canvas-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  overflow: auto;
+  position: relative;
+  background:
+    radial-gradient(circle at 20% 20%, #f5f5f5, transparent 50%),
+    radial-gradient(circle at 80% 80%, #efefef, transparent 50%),
+    var(--bg);
+}
+.poster-wrap {
+  width: min(70vh, 580px);
+  aspect-ratio: 3 / 4;
+  position: relative;
+}
+.poster {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #1a1a1a;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.18), 0 8px 20px rgba(0,0,0,0.08);
+  user-select: none;
+}
+.poster img.layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.poster-bg { z-index: 1; }
+.poster-subject { z-index: 100; }
+
+.text-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4%;
+  pointer-events: none;
+}
+.text-content {
+  width: 100%;
+  text-align: center;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.char {
+  position: relative;
+  z-index: 200;
+  display: inline-block;
+  cursor: grab;
+  pointer-events: auto;
+  will-change: transform;
+}
+.char:active { cursor: grabbing; }
+.char.behind { z-index: 50; }
+.char.selected {
+  outline: 2px dashed rgba(255,255,255,0.95);
+  outline-offset: 3px;
+}
+.char:hover {
+  outline: 1px dashed rgba(255,255,255,0.5);
+  outline-offset: 3px;
+}
+
+/* Filter chips */
+.filters-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+.filter-chip {
+  padding: 9px 2px;
+  font-size: 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fafafa;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  color: #555;
+  text-align: center;
+  transition: all 0.12s;
+}
+.filter-chip:hover { border-color: #888; background: #fff; }
+.filter-chip.active {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+
+/* Filter applied to photo only (bg + subject) */
+.poster-bg, .poster-subject {
+  transition: filter 0.25s ease;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #999;
+  font-size: 13px;
+  z-index: 5;
+  pointer-events: none;
+  text-align: center;
+  padding: 30px;
+}
+.placeholder .big {
+  font-size: 38px;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 1000;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.layer-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  z-index: 2000;
+  pointer-events: none;
+  display: none;
+  font-family: ui-monospace, monospace;
+}
+.layer-badge.show { display: block; }
+.layer-badge .arrow { color: var(--accent); }
+
+/* Transient layer-change notification (shown on arrow keys) */
+.layer-toast {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 14px 26px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  z-index: 5000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'IBM Plex Sans KR', 'Noto Sans KR', sans-serif;
+}
+.layer-toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.layer-toast .arrow {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #111;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: 0;
+  transition: all 0.25s;
+  pointer-events: none;
+  z-index: 9999;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.divider { height: 1px; background: var(--line); margin: 18px 0; }
+
+.font-preview {
+  font-size: 14px;
+  margin-top: 6px;
+  color: #555;
+  padding: 8px 11px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  min-height: 36px;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="brand">
+    <span class="dot"></span>
+    <h1>Depth Poster</h1>
+    <span class="ver">v1.0</span>
+  </div>
+  <div class="tagline">Layer typography over photo subjects to design striking posters.</div>
+
+  <div class="section-title">1. Photo</div>
+  <label class="upload-box" id="upload-box">
+    <input type="file" id="img-input" accept="image/*">
+    <span id="upload-empty" style="display:block;">
+      <span class="ic" style="display:block;">+</span>
+      <span class="t" style="display:block;">Upload photo</span>
+      <span class="s" style="display:block;">jpg, png · portrait recommended</span>
+    </span>
+    <img class="thumb" id="thumb" style="display:none;" alt="">
+    <span id="upload-info" style="display:none; flex:1; min-width:0;">
+      <span class="t" id="upload-name" style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">photo.jpg</span>
+      <span class="s" style="display:block;">Click to change</span>
+    </span>
+  </label>
+
+  <div class="section-title">2. Text</div>
+  <div class="field">
+    <input type="text" id="text-input" value="DEPTH" placeholder="Type your text (English / Korean)" maxlength="80">
+  </div>
+
+  <div class="field">
+    <label>Font</label>
+    <select id="font-select">
+      <optgroup label="Sans-serif">
+        <option value="'Black Han Sans', sans-serif" data-weight="400" selected>Black Han Sans</option>
+        <option value="'Noto Sans KR', sans-serif" data-weight="900">Noto Sans KR</option>
+        <option value="'Nanum Gothic', sans-serif" data-weight="800">Nanum Gothic</option>
+        <option value="'IBM Plex Sans KR', sans-serif" data-weight="700">IBM Plex Sans KR</option>
+        <option value="'Gowun Dodum', sans-serif" data-weight="400">Gowun Dodum</option>
+      </optgroup>
+      <optgroup label="Serif">
+        <option value="'Noto Serif KR', serif" data-weight="900">Noto Serif KR</option>
+        <option value="'Nanum Myeongjo', serif" data-weight="800">Nanum Myeongjo</option>
+        <option value="'Gowun Batang', serif" data-weight="700">Gowun Batang</option>
+        <option value="'Song Myung', serif" data-weight="400">Song Myung</option>
+        <option value="'Hahmlet', serif" data-weight="900">Hahmlet</option>
+      </optgroup>
+    </select>
+    <div class="font-preview" id="font-preview">Aa 가나</div>
+  </div>
+
+  <div class="field">
+    <label>Color (Hex)</label>
+    <div class="row">
+      <input type="color" id="color-picker" value="#ffba00">
+      <input type="text" id="color-input" value="#ffba00" maxlength="7">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Size</label>
+    <div class="row">
+      <input type="range" id="size-input" min="24" max="600" value="220">
+      <span class="size-val" id="size-value">220px</span>
+    </div>
+  </div>
+
+  <div class="section-title">3. Filter</div>
+  <div class="filters-row" id="filters-row">
+    <button type="button" class="filter-chip active" data-filter="none">None</button>
+    <button type="button" class="filter-chip" data-filter="film">Film</button>
+    <button type="button" class="filter-chip" data-filter="mono">Mono</button>
+    <button type="button" class="filter-chip" data-filter="vintage">Vintage</button>
+    <button type="button" class="filter-chip" data-filter="cinema">Cinema</button>
+  </div>
+
+  <div class="section-title">4. Layer &amp; Position</div>
+  <div class="hint">
+    <strong>Drag</strong> any letter to move it freely.<br>
+    Click (or drag) a letter, then:<br>
+    <kbd>←</kbd> Send <strong>back</strong> · <kbd>→</kbd> Bring <strong>front</strong><br>
+    <kbd>Esc</kbd> Deselect
+  </div>
+
+  <div class="divider"></div>
+
+  <button class="btn" id="download-btn">Download PNG</button>
+  <div style="height:8px;"></div>
+  <button class="btn ghost" id="reset-btn">Reset</button>
+</aside>
+
+<main class="canvas-area">
+  <div class="poster-wrap">
+    <div class="poster" id="poster">
+      <div class="placeholder" id="placeholder">
+        <div class="big">◐</div>
+        <div>Upload a photo to start</div>
+      </div>
+      <img class="layer poster-bg" id="poster-bg" style="display:none;" alt="">
+      <div class="text-layer">
+        <div class="text-content" id="text-content"></div>
+      </div>
+      <img class="layer poster-subject" id="poster-subject" style="display:none;" alt="">
+      <div class="layer-badge" id="layer-badge">Selected: <span id="badge-char"></span> · <span class="arrow" id="badge-state">Front</span></div>
+      <div class="layer-toast" id="layer-toast">
+        <span class="arrow" id="layer-toast-arrow">←</span>
+        <span id="layer-toast-text">BACK</span>
+      </div>
+      <div class="loading-overlay" id="loading" style="display:none;">
+        <div class="spinner"></div>
+        <div id="loading-text">Processing...</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">Notice</div>
+
+<script type="module">
+// html-to-image is small and stable on esm.sh
+import * as htmlToImage from "https://esm.sh/html-to-image@1.11.11";
+
+// We use Transformers.js + RMBG-1.4 for browser-side background removal.
+// Loaded dynamically so the rest of the UI works even if the model fetch fails.
+let _segmenterPromise = null;
+async function getSegmenter(onProgress) {
+  if (_segmenterPromise) return _segmenterPromise;
+  _segmenterPromise = (async () => {
+    const tx = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2");
+    const { AutoModel, AutoProcessor, env } = tx;
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+    const model_id = 'briaai/RMBG-1.4';
+    const model = await AutoModel.from_pretrained(model_id, {
+      progress_callback: (p) => {
+        if (!onProgress) return;
+        if (p.status === 'progress' && typeof p.progress === 'number') {
+          onProgress(`Downloading model ${Math.round(p.progress)}%`);
+        } else if (p.status === 'ready') {
+          onProgress('Model ready');
+        }
+      }
+    });
+    const processor = await AutoProcessor.from_pretrained(model_id, {
+      config: {
+        do_normalize: true, do_pad: false, do_rescale: true, do_resize: true,
+        image_mean: [0.5, 0.5, 0.5], image_std: [1, 1, 1],
+        resample: 2, rescale_factor: 0.00392156862745098,
+        size: { width: 1024, height: 1024 }
+      }
+    });
+    return { model, processor, tx };
+  })().catch(err => { _segmenterPromise = null; throw err; });
+  return _segmenterPromise;
+}
+
+async function removeBackground(imageUrl, onProgress) {
+  const { model, processor, tx } = await getSegmenter(onProgress);
+  const { RawImage } = tx;
+  if (onProgress) onProgress('Analyzing image...');
+  const image = await RawImage.fromURL(imageUrl);
+  const { pixel_values } = await processor(image);
+  const { output } = await model({ input: pixel_values });
+  if (onProgress) onProgress('Applying mask...');
+  const maskTensor = output[0].mul(255).to('uint8');
+  const maskImg = await RawImage.fromTensor(maskTensor).resize(image.width, image.height);
+  const maskData = maskImg.data;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(image.toCanvas(), 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < maskData.length; i++) {
+    imageData.data[4 * i + 3] = maskData[i];
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+const $ = id => document.getElementById(id);
+const state = {
+  text: 'DEPTH',
+  font: "'Black Han Sans', sans-serif",
+  fontWeight: 400,
+  color: '#ffba00',
+  size: 220,
+  selectedIdx: null,
+  layers: {},    // index -> 'front' | 'behind'  (default: front)
+  offsets: {},   // index -> {x, y} drag offset in px
+  filter: 'none',
+  hasImage: false,
+};
+
+const FILTERS = {
+  none:    '',
+  film:    'contrast(1.08) saturate(0.45) sepia(0.22) brightness(0.96)',
+  mono:    'grayscale(1) contrast(1.05) brightness(0.98)',
+  vintage: 'sepia(0.55) contrast(1.1) saturate(0.85) brightness(0.95)',
+  cinema:  'contrast(1.28) saturate(0.9) brightness(0.92) hue-rotate(-6deg)',
+};
+function applyFilter() {
+  const v = FILTERS[state.filter] || '';
+  $('poster-bg').style.filter = v;
+  $('poster-subject').style.filter = v;
+}
+
+function showToast(msg, ms = 1800) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function renderText() {
+  const el = $('text-content');
+  el.style.fontFamily = state.font;
+  el.style.fontWeight = state.fontWeight;
+  el.style.color = state.color;
+  el.style.fontSize = state.size + 'px';
+  el.innerHTML = '';
+
+  const chars = [...state.text]; // unicode-aware split
+  chars.forEach((ch, i) => {
+    if (ch === ' ') {
+      el.appendChild(document.createTextNode(' '));
+      return;
+    }
+    if (ch === '\n') {
+      el.appendChild(document.createElement('br'));
+      return;
+    }
+    const span = document.createElement('span');
+    span.className = 'char';
+    span.textContent = ch;
+    span.dataset.idx = i;
+    if (state.layers[i] === 'behind') span.classList.add('behind');
+    if (state.selectedIdx === i) span.classList.add('selected');
+    const off = state.offsets[i];
+    if (off) span.style.transform = `translate(${off.x}px, ${off.y}px)`;
+    span.addEventListener('mousedown', e => startDrag(e, i, span));
+    el.appendChild(span);
+  });
+}
+
+// --- Drag-to-position ---
+let drag = null;
+function startDrag(e, i, span) {
+  if (e.button !== 0) return; // left mouse only
+  e.preventDefault();
+  e.stopPropagation();
+  // Select this character (visual + state)
+  document.querySelectorAll('.char.selected').forEach(el => el.classList.remove('selected'));
+  span.classList.add('selected');
+  state.selectedIdx = i;
+  updateBadge();
+  const cur = state.offsets[i] || { x: 0, y: 0 };
+  drag = {
+    idx: i, span,
+    startX: e.clientX, startY: e.clientY,
+    baseX: cur.x, baseY: cur.y,
+    moved: false
+  };
+}
+function moveDrag(e) {
+  if (!drag) return;
+  const dx = e.clientX - drag.startX;
+  const dy = e.clientY - drag.startY;
+  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+  const x = drag.baseX + dx;
+  const y = drag.baseY + dy;
+  state.offsets[drag.idx] = { x, y };
+  drag.span.style.transform = `translate(${x}px, ${y}px)`;
+}
+function endDrag() { drag = null; }
+document.addEventListener('mousemove', moveDrag);
+document.addEventListener('mouseup', endDrag);
+
+function updateBadge() {
+  const badge = $('layer-badge');
+  if (state.selectedIdx === null) {
+    badge.classList.remove('show');
+    return;
+  }
+  const ch = [...state.text][state.selectedIdx] || '';
+  $('badge-char').textContent = ch === ' ' ? '␣' : ch;
+  const isBehind = state.layers[state.selectedIdx] === 'behind';
+  $('badge-state').textContent = isBehind ? 'Back' : 'Front';
+  badge.classList.add('show');
+}
+
+// Transient layer-change notification ("BACK" / "FRONT" pop)
+function showLayerToast(direction) {
+  const el = $('layer-toast');
+  const arrowEl = $('layer-toast-arrow');
+  const textEl = $('layer-toast-text');
+  if (direction === 'back') {
+    arrowEl.textContent = '←';
+    arrowEl.style.order = '0';
+    textEl.textContent = 'BACK';
+    textEl.style.order = '1';
+  } else {
+    arrowEl.textContent = '→';
+    arrowEl.style.order = '1';
+    textEl.textContent = 'FRONT';
+    textEl.style.order = '0';
+  }
+  // Re-trigger animation cleanly
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(showLayerToast._t);
+  showLayerToast._t = setTimeout(() => el.classList.remove('show'), 650);
+}
+
+// Mousedown outside chars deselects (mousedown so it doesn't fight with drag)
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('.char')) return;
+  if (e.target.closest('.sidebar')) return;
+  state.selectedIdx = null;
+  renderText();
+  updateBadge();
+});
+
+document.addEventListener('keydown', e => {
+  // ignore typing in inputs
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === 'Escape') {
+    state.selectedIdx = null;
+    renderText();
+    updateBadge();
+    return;
+  }
+  if (state.selectedIdx === null) return;
+  if (e.key === 'ArrowLeft') {
+    state.layers[state.selectedIdx] = 'behind';
+    renderText();
+    updateBadge();
+    showLayerToast('back');
+    e.preventDefault();
+  } else if (e.key === 'ArrowRight') {
+    state.layers[state.selectedIdx] = 'front';
+    renderText();
+    updateBadge();
+    showLayerToast('front');
+    e.preventDefault();
+  }
+});
+
+// --- Sidebar bindings ---
+$('text-input').addEventListener('input', e => {
+  state.text = e.target.value;
+  state.layers = {};
+  state.offsets = {};
+  state.selectedIdx = null;
+  renderText();
+  updateBadge();
+});
+
+// Filter chips
+$('filters-row').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-chip');
+  if (!btn) return;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.filter = btn.dataset.filter;
+  applyFilter();
+});
+
+$('font-select').addEventListener('change', e => {
+  const opt = e.target.selectedOptions[0];
+  state.font = opt.value;
+  state.fontWeight = +opt.dataset.weight || 400;
+  $('font-preview').style.fontFamily = state.font;
+  $('font-preview').style.fontWeight = state.fontWeight;
+  renderText();
+});
+// init font preview
+$('font-preview').style.fontFamily = state.font;
+$('font-preview').style.fontWeight = state.fontWeight;
+
+$('color-picker').addEventListener('input', e => {
+  state.color = e.target.value;
+  $('color-input').value = e.target.value;
+  renderText();
+});
+$('color-input').addEventListener('input', e => {
+  let v = e.target.value.trim();
+  if (!v.startsWith('#')) v = '#' + v;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    state.color = v;
+    $('color-picker').value = v;
+    renderText();
+  }
+});
+
+$('size-input').addEventListener('input', e => {
+  state.size = +e.target.value;
+  $('size-value').textContent = state.size + 'px';
+  renderText();
+});
+
+// --- Image upload + background removal ---
+$('img-input').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const url = URL.createObjectURL(file);
+  $('poster-bg').src = url;
+  $('poster-bg').style.display = '';
+  $('placeholder').style.display = 'none';
+  $('thumb').src = url;
+  $('thumb').style.display = 'block';
+  $('upload-empty').style.display = 'none';
+  $('upload-info').style.display = 'block';
+  $('upload-name').textContent = file.name;
+  $('upload-box').classList.add('has-file');
+
+  $('poster-subject').style.display = 'none';
+  $('loading').style.display = 'flex';
+  $('loading-text').textContent = 'Extracting subject...\n(First run downloads ~44MB model)';
+
+  try {
+    const blob = await removeBackground(url, (msg) => {
+      $('loading-text').textContent = msg;
+    });
+    if (!blob) throw new Error('Empty result');
+    const subjectUrl = URL.createObjectURL(blob);
+    $('poster-subject').src = subjectUrl;
+    $('poster-subject').style.display = '';
+    state.hasImage = true;
+    showToast('Subject extracted');
+  } catch (err) {
+    console.error('Background removal failed:', err);
+    // Fallback: show the original image as subject too (no depth effect),
+    // so the poster is still usable.
+    $('poster-subject').src = url;
+    $('poster-subject').style.display = '';
+    state.hasImage = true;
+    showToast('Auto cutout failed — using original (see console)', 3500);
+  } finally {
+    $('loading').style.display = 'none';
+  }
+});
+
+// --- Reset ---
+$('reset-btn').addEventListener('click', () => {
+  state.layers = {};
+  state.offsets = {};
+  state.selectedIdx = null;
+  renderText();
+  updateBadge();
+  showToast('Layers and positions reset');
+});
+
+// --- Download ---
+function describeError(err) {
+  if (!err) return 'unknown';
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  // ErrorEvent or generic Event from img.onerror
+  if (err.target && err.target.tagName === 'IMG') return 'Image failed to load';
+  if (err.type === 'error') return 'Asset load error';
+  if (err.message) return err.message;
+  try { return JSON.stringify(err); } catch (_) { return String(err); }
+}
+
+function waitForImagesLoaded(root) {
+  const imgs = [...root.querySelectorAll('img')].filter(i => i.style.display !== 'none' && i.src);
+  return Promise.all(imgs.map(img => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => { img.removeEventListener('load', done); img.removeEventListener('error', done); resolve(); };
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }));
+}
+
+$('download-btn').addEventListener('click', async () => {
+  const node = $('poster');
+  // Hide selection outline / badge for capture
+  const prevSelected = state.selectedIdx;
+  state.selectedIdx = null;
+  renderText();
+  updateBadge();
+  // Hide transient overlays during capture
+  $('layer-toast').classList.remove('show');
+
+  $('download-btn').disabled = true;
+  $('download-btn').textContent = 'Saving...';
+  try {
+    // Make sure all images in the poster are fully loaded.
+    // html-to-image needs decoded pixels; otherwise toPng errors with an
+    // image-load Event (which previously stringified to "[object Event]").
+    await waitForImagesLoaded(node);
+
+    const opts = {
+      pixelRatio: 2,
+      // IMPORTANT: do NOT enable cacheBust — it appends "?t=..." which breaks
+      // blob: URLs and triggers image-load errors.
+      cacheBust: false,
+      skipFonts: false,
+      style: { boxShadow: 'none' },
+    };
+
+    let dataUrl;
+    try {
+      dataUrl = await htmlToImage.toPng(node, opts);
+    } catch (e1) {
+      // Fallback: render via canvas first (sometimes succeeds when toPng
+      // fails on font embedding, etc.)
+      console.warn('toPng failed, retrying via toCanvas:', e1);
+      const canvas = await htmlToImage.toCanvas(node, { ...opts, skipFonts: true });
+      dataUrl = canvas.toDataURL('image/png');
+    }
+
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `depth-poster-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    showToast('PNG saved');
+  } catch (err) {
+    console.error('Download error:', err);
+    showToast('Save failed: ' + describeError(err), 4000);
+  } finally {
+    $('download-btn').disabled = false;
+    $('download-btn').textContent = 'Download PNG';
+    state.selectedIdx = prevSelected;
+    renderText();
+    updateBadge();
+  }
+});
+
+// initial
+renderText();
+applyFilter();
+</script>
+</body>
+</html>
